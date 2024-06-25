@@ -1,32 +1,77 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
+import { getKoders, createKoder, deleteKoder } from './api'
+import { Toaster, toast } from "sonner"
 import clsx from "clsx"
 
 export default function App(){
   // Guardar lista de todos
     const [koders, setKoders] = useState([])
 
+    // Recibe 2 parametros
+    // 1.- Callback / funcion
+    // 2.- Un arreglo de dependencias
+    // useEffect se usa para ejecutar codigo en partes especificas del ciclo de vida de un componente
+    // useEffect se ejecuta en 2 ocaciones, 
+    // 1.- Cuando el componente se renderiza por primera vez
+    // 2.- Cuando cambia una de sus dependencias
+    useEffect(() => {
+        getKoders()
+        .then((koders) => {
+            setKoders(koders)
+        }) 
+        .catch((error) => {
+            console.log('error al crear el koder',error)
+        }) 
+    }, [])
+
     const {
         register, 
         handleSubmit,
         reset, 
         formState: { errors, isValid, isSubmitted},
+        setFocus
     } = useForm() 
 
-    function onSubmit(data){
-        console.log("data: ", data)
-        setKoders( [...koders, {name: data.name, lastName: data.lastName, email: data.email}] )
-        reset()
+    async function onSubmit(data){
+        try{
+            await createKoder({
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email
+            })
+            
+            const kodersList = await getKoders();
+            setKoders(kodersList)
+            reset()
+            toast.success("Koder Creado")
+        } catch (error) {
+            console.error("Error al crear koder", error)
+        }
+        
     }
 
-    function deleteKoder(index) {
-        const newKoders = koders.filter((koder, i) => i !== index);
-        setKoders(newKoders);
+    function onDelete(koderId){
+        deleteKoder(koderId)
+        .then(() => {
+            toast.success("Koder Eliminado")
+            getKoders()
+                .then((koders) => {
+                    setKoders(koders)
+                })
+                .catch((error) => {
+                    console.error('error al obtener koders', error)
+                })
+        })
+        .catch((error) => {
+            console.error('error al eliminar el koder', error)
+        })
     }
 
 
     return(
         <main className="w-full min-h-screen">
+            <Toaster position="top" richColors />
                 <p className="w-full bg-teal-600 text-black font-bold text-center text-xl py-2">Koders react-hook-form</p>
             <form 
                 className="flex gap-2 justify-center p-10" 
@@ -96,7 +141,7 @@ export default function App(){
                         <span className="flex items-center">{koder.name}</span>
                         <span className="flex items-center">{koder.lastName}</span>
                         <span className="flex items-center">{koder.email}</span>
-                        <button className=" rounded-xl p-2 w-40" onClick={() => deleteKoder(index)}>- Borrar</button>
+                        <button className=" rounded-xl p-2 w-40" onClick={() => onDelete(koder.id)}>- Borrar</button>
                     </div>
                     )
                 })

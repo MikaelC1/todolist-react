@@ -63,7 +63,6 @@ export default function App(){
                 <div key={index} className="flex bg-gray-500 w-full justify-between gap-5 text-black px-2">
                     <span className="flex items-center">{todo}</span>
                     <button className=" rounded-xl p-2 w-40"
-                    onClick={() => removeTask(index)}
                     >- Borrar</button>
                 </div>
                 )
